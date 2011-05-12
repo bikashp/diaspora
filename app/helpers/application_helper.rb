@@ -4,10 +4,6 @@
 
 module ApplicationHelper
   @@youtube_title_cache = Hash.new("no-title")
-  def time_for_sort post
-    post.created_at
-  end
-
   def timeago(time, options={})
     options[:class] ||= "timeago"
     content_tag(:abbr, time.to_s, options.merge(:title => time.iso8601)) if time
@@ -316,5 +312,28 @@ module ApplicationHelper
 
   def rtl?
     @rtl ||= RTL_LANGUAGES.include? I18n.locale
+  end
+
+  def next_page_path
+    case @aspect
+    when :tag
+      tag_path(@tag, :max_time => @posts.last.created_at.to_i)
+    when :profile
+      person_path(@person, :max_time => @posts.last.created_at.to_i)
+    when :all
+      aspects_path(:max_time => @posts.last.send(session[:sort_order].to_sym).to_i, :a_ids => params[:a_ids])
+    else
+      if @aspect.is_a?(Aspect)
+        aspects_path(:max_time => @posts.last.send(session[:sort_order].to_sym).to_i, :a_ids => params[:a_ids])
+      end
+    end
+  end
+
+  def time_for_sort post
+    if @aspect == :all || @aspect.is_a?(Aspect)
+      post.send(session[:sort_order].to_sym)
+    else
+      post.created_at
+    end
   end
 end
